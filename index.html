@@ -79,8 +79,29 @@
         <div id="loading-text">Loading...</div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        // ==================== 兼容垫片 ====================
+        // r128 没有 CapsuleGeometry(r133+ 才有)，这里用 Cylinder + 两个半球拼装一个等价几何体
+        if (typeof THREE.CapsuleGeometry !== 'function') {
+            THREE.CapsuleGeometry = function (radius, length, capSegments, radialSegments) {
+                radius = radius || 0.5;
+                length = length || 1;
+                capSegments = capSegments || 4;
+                radialSegments = radialSegments || 8;
+
+                const geom = new THREE.CylinderGeometry(radius, radius, length, radialSegments, 1, false);
+                // 顶/底半球
+                const topSphere = new THREE.SphereGeometry(radius, radialSegments, capSegments, 0, Math.PI * 2, 0, Math.PI / 2);
+                const bottomSphere = new THREE.SphereGeometry(radius, radialSegments, capSegments, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+                topSphere.translate(0, length / 2, 0);
+                bottomSphere.translate(0, -length / 2, 0);
+                geom.merge(topSphere);
+                geom.merge(bottomSphere);
+                return geom;
+            };
+        }
+
         /**
          * 黑暗之魂风格3D动作RPG - 基础框架
          * 
